@@ -167,7 +167,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           title="Ingresos"
           value={formatCOP(totalIncome)}
           subtitle={now.toLocaleString("es-ES", { month: "long" })}
-          trend="+11.2%"
           trendUp
           icon={<TrendingUp size={18} color="#059669" />}
           iconBg="#d1fae5"
@@ -176,7 +175,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           title="Gastos"
           value={formatCOP(totalExpense)}
           subtitle={now.toLocaleString("es-ES", { month: "long" })}
-          trend="-8.3%"
           trendUp={false}
           icon={<TrendingDown size={18} color="#ef4444" />}
           iconBg="#fee2e2"
@@ -192,7 +190,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           title="Ahorro"
           value={`${savingsRate}%`}
           subtitle={`${formatCOP(balance)} ahorrados`}
-          trend="+5.1%"
           trendUp
           icon={<PiggyBank size={18} color="#8b5cf6" />}
           iconBg="#ede9fe"
