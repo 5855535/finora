@@ -7,7 +7,6 @@ import {
   CreditCard,
   Target,
   PieChart,
-  User,
   Settings,
 } from "lucide-react";
 import type { AppPage } from "../../App";
@@ -40,14 +39,16 @@ export function AppLayout({
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Sidebar Desktop */}
-      <div className="hidden md:flex w-72 border-r border-border bg-card flex-col">
-        <div className="p-6 border-b border-border">
-          <h1 className="text-2xl font-bold tracking-tight text-primary">
+    <div className="flex h-screen w-full overflow-hidden bg-background">
+      {/* ── Sidebar Desktop ── */}
+      <aside className="hidden md:flex w-64 shrink-0 border-r border-border bg-card flex-col overflow-hidden">
+        <div className="p-5 border-b border-border">
+          <h1 className="text-2xl font-bold tracking-tight text-primary truncate">
             Finora
           </h1>
-          <p className="text-sm text-muted-foreground">Finanzas Personales</p>
+          <p className="text-sm text-muted-foreground truncate">
+            Finanzas Personales
+          </p>
         </div>
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
@@ -55,56 +56,64 @@ export function AppLayout({
             <button
               key={id}
               onClick={() => onNavigate(id as AppPage)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all truncate ${
                 currentPage === id
                   ? "bg-primary text-primary-foreground font-medium"
                   : "hover:bg-muted text-foreground"
               }`}
             >
-              <Icon size={20} />
-              <span>{label}</span>
+              <Icon size={18} className="shrink-0" />
+              <span className="truncate text-sm">{label}</span>
             </button>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-border">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
-              {user?.email?.[0]?.toUpperCase() || "U"}
+        <div className="p-4 border-t border-border shrink-0">
+          <div className="flex items-center gap-3 mb-4 min-w-0">
+            <div className="w-9 h-9 shrink-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+              {user?.email?.[0]?.toUpperCase() ?? "U"}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">
-                {user?.displayName || user?.email?.split("@")[0]}
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-sm truncate">
+                {user?.displayName ?? user?.email?.split("@")[0]}
               </p>
               <p className="text-xs text-muted-foreground truncate">
                 {user?.email}
               </p>
             </div>
           </div>
-
           <button
             onClick={onLogout}
-            className="w-full flex items-center justify-center gap-2 py-3 text-red-600 hover:bg-red-50 border border-red-200 rounded-xl font-medium"
+            className="w-full flex items-center justify-center gap-2 py-2.5 text-red-600 hover:bg-red-50 border border-red-200 rounded-xl font-medium text-sm"
           >
-            <LogOut size={18} />
+            <LogOut size={16} />
             Cerrar Sesión
           </button>
         </div>
-      </div>
+      </aside>
 
-      {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-primary">Finora</h1>
-        <button onClick={() => setMenuOpen(!menuOpen)} className="p-2">
-          {menuOpen ? <X size={24} /> : <Menu size={24} />}
+      {/* ── Mobile Header ── */}
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
+        <h1 className="text-lg font-bold text-primary">Finora</h1>
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="p-2 rounded-lg hover:bg-muted"
+        >
+          {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
-      </div>
+      </header>
 
-      {/* Mobile Menu */}
+      {/* ── Mobile Drawer ── */}
       {menuOpen && (
-        <div className="md:hidden fixed inset-0 z-50 bg-black/80 flex items-start pt-16">
-          <div className="bg-card w-full h-full overflow-auto p-4">
-            <nav className="space-y-2">
+        <div
+          className="md:hidden fixed inset-0 z-50 bg-black/70"
+          onClick={() => setMenuOpen(false)}
+        >
+          <div
+            className="bg-card w-72 max-w-[85vw] h-full overflow-y-auto p-4 pt-16 flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <nav className="space-y-1 flex-1">
               {menuItems.map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
@@ -112,22 +121,35 @@ export function AppLayout({
                     onNavigate(id as AppPage);
                     setMenuOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-4 rounded-2xl text-left ${
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left ${
                     currentPage === id
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-muted"
                   }`}
                 >
-                  <Icon size={22} />
-                  <span className="text-lg">{label}</span>
+                  <Icon size={20} className="shrink-0" />
+                  <span className="text-base truncate">{label}</span>
                 </button>
               ))}
             </nav>
 
-            <div className="mt-8 p-4 border-t border-border">
+            <div className="mt-6 pt-4 border-t border-border">
+              <div className="flex items-center gap-3 mb-4 min-w-0">
+                <div className="w-9 h-9 shrink-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  {user?.email?.[0]?.toUpperCase() ?? "U"}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm truncate">
+                    {user?.displayName ?? user?.email?.split("@")[0]}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user?.email}
+                  </p>
+                </div>
+              </div>
               <button
                 onClick={onLogout}
-                className="w-full py-4 text-red-600 border border-red-200 rounded-2xl font-medium"
+                className="w-full py-3 text-red-600 border border-red-200 rounded-2xl font-medium text-sm"
               >
                 Cerrar Sesión
               </button>
@@ -136,10 +158,10 @@ export function AppLayout({
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto pt-16 md:pt-0">
-        <div className="p-4 md:p-8 max-w-7xl mx-auto">{children}</div>
-      </div>
+      {/* ── Main Content ── */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden pt-14 md:pt-0 min-w-0">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">{children}</div>
+      </main>
     </div>
   );
 }

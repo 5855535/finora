@@ -35,13 +35,46 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Forzar modo oscuro permanente
+  // 1. Forzar modo oscuro permanente
   useEffect(() => {
     document.documentElement.classList.add("dark");
     localStorage.setItem("darkMode", "true");
   }, []);
 
-  // Autenticación
+  // 2. Detector de Instalación PWA (Para depuración)
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      // Previene el prompt automático de Chrome para manejarlo luego si quieres
+      e.preventDefault();
+      console.log(
+        "✅ PWA DETECTADA: El evento 'beforeinstallprompt' se disparó.",
+      );
+      console.log(
+        "👉 Si ves esto pero no hay botón, es un bug de caché de Chrome. Ejecuta 'chrome://restart'",
+      );
+
+      // Guardamos el evento por si quieres crear un botón manual de "Instalar" en el futuro
+      (window as any).deferredPrompt = e;
+    };
+
+    const handleAppInstalled = () => {
+      console.log("🎉 ¡La aplicación se instaló correctamente!");
+      (window as any).deferredPrompt = null;
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt,
+      );
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
+
+  // 3. Autenticación
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -69,12 +102,11 @@ export default function App() {
     }
   };
 
-  // ==================== PANTALLA DE CARGA MEJORADA ====================
+  // ==================== PANTALLA DE CARGA ====================
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          {/* Icono principal de la app */}
           <div className="w-24 h-24 mx-auto mb-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center shadow-2xl">
             <span className="text-5xl">💰</span>
           </div>
@@ -90,7 +122,7 @@ export default function App() {
     );
   }
 
-  // Pantallas públicas
+  // ==================== PANTALLAS ====================
   if (screen === "landing") {
     return (
       <Landing

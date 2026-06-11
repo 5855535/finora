@@ -17,17 +17,22 @@ function figmaAssetResolver() {
 }
 
 export default defineConfig({
+  publicDir: "src/public", // ← apunta a donde están tus íconos reales
   plugins: [
     figmaAssetResolver(),
     react(),
     tailwindcss(),
-
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
-
       includeAssets: ["favicon.ico", "icon-192.png", "icon-512.png"],
-
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        cleanupOutdatedCaches: true,
+        // Evita que el sw.js manual interfiera
+        navigateFallback: "index.html",
+        navigateFallbackDenylist: [/^\/api/],
+      },
       manifest: {
         name: "Finora",
         short_name: "Finora",
@@ -38,16 +43,15 @@ export default defineConfig({
         orientation: "portrait",
         start_url: "/",
         scope: "/",
-
         icons: [
           {
-            src: "/icon-192.png",
+            src: "icon-192.png",
             sizes: "192x192",
             type: "image/png",
             purpose: "any maskable",
           },
           {
-            src: "/icon-512.png",
+            src: "icon-512.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "any maskable",
@@ -56,15 +60,12 @@ export default defineConfig({
       },
     }),
   ],
-
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-
   assetsInclude: ["**/*.svg", "**/*.csv"],
-
   build: {
     chunkSizeWarningLimit: 1500,
   },
