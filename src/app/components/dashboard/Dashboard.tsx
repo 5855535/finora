@@ -25,6 +25,19 @@ interface DashboardProps {
   onNavigate: (page: string) => void;
 }
 
+const formatCOP = (amount: number) => {
+  const abs = Math.abs(amount);
+  const sign = amount < 0 ? "-" : "";
+  if (abs >= 1_000_000_000)
+    return `${sign}$${(abs / 1_000_000_000).toFixed(1)}B`;
+  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`;
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    minimumFractionDigits: 0,
+  }).format(amount);
+};
+
 export function Dashboard({ onNavigate }: DashboardProps) {
   const { user } = useAuth();
   const { data: transactions = [], loading: txLoading } =
@@ -35,13 +48,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     useFirestore("budgets");
 
   const loading = txLoading || subLoading || budgetsLoading;
-
-  const formatCOP = (amount: number) =>
-    new Intl.NumberFormat("es-CO", {
-      style: "currency",
-      currency: "COP",
-      minimumFractionDigits: 0,
-    }).format(amount);
 
   const now = new Date();
 
@@ -140,6 +146,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
   if (loading)
     return <div className="p-8 text-center">Cargando dashboard...</div>;
+
   return (
     <div className="space-y-5 w-full min-w-0">
       {/* Greeting */}
@@ -213,10 +220,8 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           </div>
           <ProgressBar value={budgetUsed} max={100} />
           <div className="flex justify-between mt-3 text-xs text-muted-foreground gap-2 flex-wrap">
-            <span className="break-words">
-              {formatCOP(totalSpent)} gastados
-            </span>
-            <span className="break-words">de {formatCOP(totalBudget)}</span>
+            <span>{formatCOP(totalSpent)} gastados</span>
+            <span>de {formatCOP(totalBudget)}</span>
           </div>
         </Card>
 
@@ -224,7 +229,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <p className="uppercase text-xs tracking-widest font-semibold text-muted-foreground mb-1">
             Suscripciones activas
           </p>
-          <p className="text-2xl sm:text-3xl font-bold font-mono text-foreground break-words">
+          <p className="text-2xl sm:text-3xl font-bold font-mono text-foreground">
             {formatCOP(totalSubscriptionsMonthly)}
           </p>
           <p className="text-sm text-muted-foreground">
