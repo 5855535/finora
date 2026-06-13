@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { auth } from "../firebase";
 
@@ -8,14 +8,15 @@ import { Register } from "./components/auth/Register";
 import { ForgotPassword } from "./components/auth/ForgotPassword";
 import { AppLayout } from "./components/layout/AppLayout";
 
-import { Dashboard } from "./components/dashboard/Dashboard";
-import { Transactions } from "./components/transactions/Transactions";
-import { Subscriptions } from "./components/subscriptions/Subscriptions";
-import { Budgets } from "./components/budgets/Budgets";
-import { Goals } from "./components/goals/Goals";
-import { Statistics } from "./components/statistics/Statistics";
-import { Alerts } from "./components/alerts/Alerts";
-import { Settings } from "./components/settings/Settings";
+// Lazy load de todas las páginas internas
+const Dashboard = lazy(() => import("./components/dashboard/Dashboard").then(m => ({ default: m.Dashboard })));
+const Transactions = lazy(() => import("./components/transactions/Transactions").then(m => ({ default: m.Transactions })));
+const Subscriptions = lazy(() => import("./components/subscriptions/Subscriptions").then(m => ({ default: m.Subscriptions })));
+const Budgets = lazy(() => import("./components/budgets/Budgets").then(m => ({ default: m.Budgets })));
+const Goals = lazy(() => import("./components/goals/Goals").then(m => ({ default: m.Goals })));
+const Statistics = lazy(() => import("./components/statistics/Statistics").then(m => ({ default: m.Statistics })));
+const Alerts = lazy(() => import("./components/alerts/Alerts").then(m => ({ default: m.Alerts })));
+const Settings = lazy(() => import("./components/settings/Settings").then(m => ({ default: m.Settings })));
 
 type Screen = "landing" | "login" | "register" | "forgot" | "app";
 
@@ -35,30 +36,17 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 1. Forzar modo oscuro permanente
   useEffect(() => {
     document.documentElement.classList.add("dark");
     localStorage.setItem("darkMode", "true");
   }, []);
 
-  // 2. Detector de Instalación PWA (Para depuración)
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
-      // Previene el prompt automático de Chrome para manejarlo luego si quieres
       e.preventDefault();
-      console.log(
-        "✅ PWA DETECTADA: El evento 'beforeinstallprompt' se disparó.",
-      );
-      console.log(
-        "👉 Si ves esto pero no hay botón, es un bug de caché de Chrome. Ejecuta 'chrome://restart'",
-      );
-
-      // Guardamos el evento por si quieres crear un botón manual de "Instalar" en el futuro
       (window as any).deferredPrompt = e;
     };
-
     const handleAppInstalled = () => {
-      console.log("🎉 ¡La aplicación se instaló correctamente!");
       (window as any).deferredPrompt = null;
     };
 
@@ -66,26 +54,17 @@ export default function App() {
     window.addEventListener("appinstalled", handleAppInstalled);
 
     return () => {
-      window.removeEventListener(
-        "beforeinstallprompt",
-        handleBeforeInstallPrompt,
-      );
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleAppInstalled);
     };
   }, []);
 
-  // 3. Autenticación
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      if (currentUser) {
-        setScreen("app");
-      } else {
-        setScreen("landing");
-      }
+      setScreen(currentUser ? "app" : "landing");
       setLoading(false);
     });
-
     return () => unsubscribe();
   }, []);
 
@@ -104,22 +83,7 @@ export default function App() {
 
   // ==================== PANTALLA DE CARGA ====================
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-24 h-24 mx-auto mb-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center shadow-2xl">
-            <span className="text-5xl">💰</span>
-          </div>
-
-          <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-6" />
-
-          <h2 className="text-2xl font-semibold text-foreground mb-1">
-            Finora
-          </h2>
-          <p className="text-muted-foreground">Cargando tus finanzas...</p>
-        </div>
-      </div>
-    );
+    return <SplashScreen />;
   }
 
   // ==================== PANTALLAS ====================
@@ -160,16 +124,49 @@ export default function App() {
       onLogout={handleLogout}
       user={user}
     >
-      {appPage === "dashboard" && (
-        <Dashboard onNavigate={(page) => setAppPage(page as AppPage)} />
-      )}
-      {appPage === "transactions" && <Transactions />}
-      {appPage === "subscriptions" && <Subscriptions />}
-      {appPage === "budgets" && <Budgets />}
-      {appPage === "goals" && <Goals />}
-      {appPage === "statistics" && <Statistics />}
-      {appPage === "alerts" && <Alerts />}
-      {appPage === "settings" && <Settings />}
+      <Suspense fallback={<PageLoader />}>
+        {appPage === "dashboard" && (
+          <Dashboard onNavigate={(page) => setAppPage(page as AppPage)} />
+        )}
+        {appPage === "transactions" && <Transactions />}
+        {appPage === "subscriptions" && <Subscriptions />}
+        {appPage === "budgets" && <Budgets />}
+        {appPage === "goals" && <Goals />}
+        {appPage === "statistics" && <Statistics />}
+        {appPage === "alerts" && <Alerts />}
+        {appPage === "settings" && <Settings />}
+      </Suspense>
     </AppLayout>
+  );
+}
+
+// ==================== PANTALLA DE CARGA INICIAL (minimalista) ====================
+function SplashScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center">
+          <span className="text-2xl font-bold text-white">F</span>
+        </div>
+        <div className="flex gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" style={{ animationDelay: "0ms" }} />
+          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" style={{ animationDelay: "150ms" }} />
+          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" style={{ animationDelay: "300ms" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== LOADER PARA PÁGINAS LAZY ====================
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center py-24">
+      <div className="flex gap-1.5">
+        <span className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: "0ms" }} />
+        <span className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: "150ms" }} />
+        <span className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: "300ms" }} />
+      </div>
+    </div>
   );
 }
